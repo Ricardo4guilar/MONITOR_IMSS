@@ -1,0 +1,33 @@
+clave_numerica,entidad_federativa,clave_iso
+01,"Aguascalientes",MXAGU
+02,"Baja California",MXBCN
+03,"Baja California Sur",MXBCS
+04,"Campeche",MXCAM
+05,"Coahuila",MXCOA
+06,"Colima",MXCOL
+07,"Chiapas",MXCHP
+08,"Chihuahua",MXCHH
+09,"Ciudad de México",MXCMX
+10,"Durango",MXDUR
+11,"Guanajuato",MXGUA
+12,"Guerrero",MXGRO
+13,"Hidalgo",MXHID
+14,"Jalisco",MXJAL
+15,"México",MXMEX
+16,"Michoacán",MXMIC
+17,"Morelos",MXMOR
+18,"Nayarit",MXNAY
+19,"Nuevo León",MXNLE
+20,"Oaxaca",MXOAX
+21,"Puebla",MXPUE
+22,"Querétaro",MXQUE
+23,"Quintana Roo",MXROO
+24,"San Luis Potosí",MXSLP
+25,"Sinaloa",MXSIN
+26,"Sonora",MXSON
+27,"Tabasco",MXTAB
+28,"Tamaulipas",MXTAM
+29,"Tlaxcala",MXTLA
+30,"Veracruz",MXVER
+31,"Yucatán",MXYUC
+32,"Zacatecas",MXZAC

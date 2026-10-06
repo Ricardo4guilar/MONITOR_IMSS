@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa Interactivo de México · 32 Estados</title>
+  <meta name="description" content="Mapa interactivo SVG de los 32 estados de México con filtro por región y acción lista para conectar con AppSheet." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">🇲🇽</span>
+      <div>
+        <h1>Mapa Interactivo de México</h1>
+        <p class="subtitle">32 estados · haz clic en un estado para ver detalle y conectar con AppSheet</p>
+      </div>
+    </div>
+    <div class="header-tools">
+      <label class="field">
+        <span>Buscar estado</span>
+        <input type="search" id="searchInput" placeholder="Ej. Jalisco, CMX…" autocomplete="off" aria-label="Buscar estado" />
+      </label>
+      <label class="field">
+        <span>Filtrar por región</span>
+        <select id="regionFilter" aria-label="Filtrar por región">
+          <option value="">Todas las regiones</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Columna del mapa -->
+    <section class="map-wrap" aria-label="Mapa de México">
+      <div class="map-toolbar">
+        <button type="button" class="chip" id="resetBtn" title="Restablecer vista y selección">↺ Restablecer</button>
+        <span class="count-badge"><strong id="visibleCount">32</strong> estados visibles</span>
+      </div>
+
+      <div class="map-stage" id="mapStage">
+        <!-- El SVG se inyecta aquí por JS -->
+        <div class="map-loading" id="mapLoading">Cargando mapa…</div>
+      </div>
+
+      <!-- Leyenda de regiones -->
+      <div class="legend" id="legend" aria-label="Leyenda de regiones"></div>
+
+      <!-- Tooltip flotante -->
+      <div class="tooltip" id="tooltip" role="status" aria-live="polite" hidden></div>
+    </section>
+
+    <!-- Panel lateral de detalle -->
+    <aside class="side-panel" id="sidePanel" aria-label="Detalle del estado">
+      <div class="panel-empty" id="panelEmpty">
+        <div class="panel-empty-icon" aria-hidden="true">📍</div>
+        <h2>Selecciona un estado</h2>
+        <p>Pasa el cursor para resaltar y haz clic para ver el detalle del estado y la acción de conexión a AppSheet.</p>
+      </div>
+
+      <div class="panel-detail" id="panelDetail" hidden>
+        <div class="panel-detail-head">
+          <span class="state-abbr" id="detailAbbr">—</span>
+          <div>
+            <h2 id="detailName">—</h2>
+            <p class="state-region" id="detailRegion">—</p>
+          </div>
+        </div>
+
+        <dl class="detail-grid">
+          <div>
+            <dt>Capital</dt>
+            <dd id="detailCapital">—</dd>
+          </div>
+          <div>
+            <dt>Clave ISO</dt>
+            <dd id="detailIso">—</dd>
+          </div>
+          <div>
+            <dt>Región</dt>
+            <dd id="detailRegion2">—</dd>
+          </div>
+        </dl>
+
+        <!-- Acción lista para conectar con AppSheet -->
+        <div class="appsheet-box">
+          <h3>Conexión a AppSheet</h3>
+          <p class="appsheet-hint">Conectado a <strong>MONITOR Kaspersky 4N</strong> · vista <code>Mapa</code>. Abre el estado filtrado por <code>Clave</code> (clave ISO).</p>
+          <button type="button" class="btn-appsheet" id="appsheetBtn" data-state-id="">
+            <span aria-hidden="true">🔗</span> Abrir en AppSheet
+          </button>
+          <div class="appsheet-url" id="appsheetUrlPreview" aria-live="polite"></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="app-footer">
+    <span>Datos geográficos: Simplemaps (licencia de uso comercial libre).</span>
+  </footer>
+
+  <!-- Datos del mapa (generado) -->
+  <script src="mx-states.js"></script>
+  <!-- Configuración de la conexión AppSheet -->
+  <script src="appsheet-config.js"></script>
+  <!-- Lógica de la app -->
+  <script src="app.js"></script>
+</body>
+</html>

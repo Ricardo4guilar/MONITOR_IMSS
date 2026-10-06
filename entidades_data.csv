@@ -1,0 +1,33 @@
+NumeroEstado,Nombre,Clave,Region,TipoEspacio
+1,Aguascalientes,MXAGU,Norte/ Occidente,A
+2,Baja California,MXBCN,Norte/ Occidente,A
+3,Baja California Sur,MXBCS,Norte/ Occidente,A
+4,Campeche,MXCAM,Centro/ Golfo/ Sureste,D
+5,Coahuila,MXCOA,Norte/ Occidente,A
+6,Colima,MXCOL,Norte/ Occidente,A
+7,Chiapas,MXCHP,Centro/Sur,C
+8,Chihuahua,MXCHH,Norte/ Occidente,A
+9,Ciudad de México,MXCMX,Metropolitano,B
+10,Durango,MXDUR,Norte/ Occidente,A
+11,Guanajuato,MXGUA,Norte/ Occidente,A
+12,Guerrero,MXGRO,Centro/Sur,C
+13,Hidalgo,MXHID,Centro/ Golfo/ Sureste,D
+14,Jalisco,MXJAL,Norte/ Occidente,A
+15,México,MXMEX,Metropolitano,B
+16,Michoacán,MXMIC,Norte/ Occidente,A
+17,Morelos,MXMOR,Centro/ Golfo/ Sureste,D
+18,Nayarit,MXNAY,Norte/ Occidente,A
+19,Nuevo León,MXNLE,Norte/ Occidente,A
+20,Oaxaca,MXOAX,Centro/Sur,C
+21,Puebla,MXPUE,Centro/Sur,C
+22,Querétaro,MXQUE,Norte/ Occidente,A
+23,Quintana Roo,MXROO,Centro/ Golfo/ Sureste,D
+24,San Luis Potosí,MXSLP,Norte/ Occidente,A
+25,Sinaloa,MXSIN,Norte/ Occidente,A
+26,Sonora,MXSON,Norte/ Occidente,A
+27,Tabasco,MXTAB,Centro/ Golfo/ Sureste,D
+28,Tamaulipas,MXTAM,Norte/ Occidente,A
+29,Tlaxcala,MXTLA,Centro/ Golfo/ Sureste,D
+30,Veracruz,MXVER,Centro/ Golfo/ Sureste,D
+31,Yucatán,MXYUC,Centro/ Golfo/ Sureste,D
+32,Zacatecas,MXZAC,Norte/ Occidente,A
