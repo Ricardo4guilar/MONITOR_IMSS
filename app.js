@@ -446,6 +446,16 @@
     applyFilters();
   }
 
+  /* ---------- Estado inicial recibido desde AppSheet ---------- */
+  function selectStateFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const iso = (params.get("clave_iso") || "").trim().toUpperCase();
+    if (!iso || !byId[iso]) return;
+
+    selectState(iso);
+    document.title = byId[iso].name + " · Mapa Interactivo de México";
+  }
+
   /* ---------- Init ---------- */
   async function init() {
     renderMap();
@@ -458,6 +468,9 @@
     buildLegendAndFilter();
     paintStates();
     applyFilters();
+
+    // 3) Si AppSheet envió ?clave_iso=MX..., seleccionar esa entidad.
+    selectStateFromUrl();
 
     el.search.addEventListener("input", applyFilters);
     el.region.addEventListener("change", applyFilters);
