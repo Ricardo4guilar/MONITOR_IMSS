@@ -16,6 +16,10 @@ window.APPSHEET_CONFIG = {
   // Vista de AppSheet a la que se salta al hacer clic en un estado.
   VIEW_NAME: "Mapa",
 
+  // Vista de AppSheet del botón global "Abrir Dashboard" (fuera de la card).
+  // No lleva filtro por estado; abre el tablero general.
+  DASHBOARD_VIEW: "Dashboard",
+
   // Columna de la tabla AppSheet usada como filtro del deep-link.
   // En tu tabla EntidadesFederativas la clave ISO es la columna "Clave".
   FILTER_COLUMN: "Clave",
@@ -76,6 +80,45 @@ window.APPSHEET_CONFIG = {
       name:   "Nombre",        // nombre del estado
       region: "Region",        // región (ej. "Norte/ Occidente", "Metropolitano")
       color:  "",              // la hoja no trae color: se autogenera por región
+    },
+
+    /*
+     * MÉTRICAS POR ENTIDAD (para la card de detalle):
+     *   - Hospitales identificados: conteo de DirectorioHospital por EntidadRef.
+     *   - Servicios realizados:     conteo de ReporteActividad por Entidad.
+     *   - Agentes instalados:       suma de "Cantidad de agentes instalados"
+     *                               (ReporteActividad) por Entidad.
+     * Como el spreadsheet es privado y no es legible por CORS desde el
+     * navegador, estas métricas se precalculan en un CSV local agregado por
+     * clave ISO. Regenera el CSV cuando cambien las tablas de origen.
+     */
+    METRICS: {
+      /*
+       * URL de PUBLICACIÓN de la hoja MetricasEntidad (Archivo > Compartir >
+       * Publicar en la Web, hoja MetricasEntidad, formato CSV). Es pública y
+       * sin CORS, por eso el mapa la lee en vivo desde el navegador (sirve en
+       * GitHub Pages / Vercel). La hoja se recalcula sola con fórmulas
+       * COUNTIF/SUMIF sobre DirectorioHospital y ReporteActividad.
+       */
+      PUBLISHED_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR326fXCMPwxyp_zolXbeBY0SjOpSnoDzuL4tFTqcvdD4oBVAxbmRZR6fdx2J8S_v4RiuxbBG7cLGsL/pub?gid=373781960&single=true&output=csv",
+
+      /*
+       * MODO DE LECTURA:
+       *  - "auto"   : intenta la URL publicada y si falla cae al CSV local.
+       *  - "remote" : solo la URL publicada (tiempo real).
+       *  - "local"  : solo el CSV local LOCAL_CSV.
+       */
+      MODE: "auto",
+
+      // CSV local de respaldo (foto precalculada) junto al mapa.
+      LOCAL_CSV: "metricas_entidad.csv",
+
+      COLUMNS: {
+        iso:        "clave_iso",
+        hospitales: "hospitales",
+        servicios:  "servicios",
+        agentes:    "agentes",
+      },
     },
   },
 };

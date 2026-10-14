@@ -12,14 +12,11 @@
   --radius: 14px;
   --shadow: 0 10px 30px rgba(0,0,0,.35);
 
-  /* Paleta por región */
-  --r-centro: #6366f1;
-  --r-noreste: #0ea5e9;
-  --r-noroeste: #14b8a6;
-  --r-occidente: #f59e0b;
-  --r-oriente: #a855f7;
-  --r-sur: #ef4444;
-  --r-sureste: #22c55e;
+  /* Paleta por región (4 regiones reales de EntidadesFederativas) */
+  --r-norte-occidente:      #0ea5e9;  /* azul   */
+  --r-metropolitano:        #f59e0b;  /* ámbar  */
+  --r-centro-sur:           #ef4444;  /* rojo   */
+  --r-centro-golfo-sureste: #22c55e;  /* verde  */
 }
 
 * { box-sizing: border-box; }
@@ -117,7 +114,7 @@ html, body {
 
 /* Estados (paths) */
 .map-stage path {
-  fill: var(--r-centro);
+  fill: var(--r-norte-occidente);
   stroke: #0f1724;
   stroke-width: .6;
   cursor: pointer;
@@ -187,13 +184,12 @@ html, body {
 
 /* ===== Panel lateral ===== */
 .side-panel {
-  position: sticky;
-  top: 20px;
+  position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  min-height: 420px;
+  min-height: 260px;
   overflow: hidden;
 }
 .panel-empty { padding: 40px 24px; text-align: center; color: var(--ink-dim); }
@@ -206,10 +202,11 @@ html, body {
 .state-abbr {
   width: 54px; height: 54px;
   display: grid; place-items: center;
-  background: linear-gradient(135deg, var(--accent), #0e7a37);
+  background: var(--r-norte-occidente); /* respaldo; JS lo pinta con el color de la región */
   color: #fff; font-weight: 700; font-size: 16px;
   border-radius: 12px;
   letter-spacing: .5px;
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
 }
 .panel-detail-head h2 { margin: 0; font-size: 20px; }
 .state-region { margin: 2px 0 0; color: var(--ink-dim); font-size: 13px; }
@@ -229,17 +226,26 @@ html, body {
 .detail-grid dt { color: var(--ink-dim); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
 .detail-grid dd { margin: 4px 0 0; font-size: 14px; font-weight: 600; }
 
-/* ===== Caja AppSheet ===== */
-.appsheet-box {
-  border: 1px dashed var(--line);
-  border-radius: 12px;
-  padding: 16px;
-  background: rgba(22,163,74,.06);
+/* ===== Métricas destacadas en la card ===== */
+.detail-grid .metric {
+  background: rgba(22,163,74,.08);
+  border-color: rgba(22,163,74,.35);
 }
-.appsheet-box h3 { margin: 0 0 6px; font-size: 15px; }
-.appsheet-hint { margin: 0 0 14px; font-size: 12.5px; color: var(--ink-dim); line-height: 1.5; }
-.appsheet-hint code { background: var(--panel-2); padding: 1px 6px; border-radius: 6px; }
-.btn-appsheet {
+.detail-grid .metric dd { font-size: 18px; color: var(--accent); }
+.detail-grid .metric-wide { grid-column: 1 / -1; }
+
+/* ===== CTA Dashboard (debajo de la card) ===== */
+.side-col {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dashboard-cta {
+  margin: 0;
+}
+.btn-dashboard {
   width: 100%;
   display: inline-flex;
   align-items: center;
@@ -248,23 +254,16 @@ html, body {
   background: linear-gradient(135deg, var(--accent), #0e7a37);
   color: #fff;
   border: none;
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: 12px;
+  padding: 14px 18px;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform .1s, box-shadow .15s, opacity .15s;
+  box-shadow: var(--shadow);
+  transition: transform .1s, box-shadow .15s;
 }
-.btn-appsheet:hover { box-shadow: 0 6px 18px rgba(22,163,74,.4); transform: translateY(-1px); }
-.btn-appsheet:active { transform: translateY(0); }
-.btn-appsheet[disabled] { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
-.appsheet-url {
-  margin-top: 10px;
-  font-size: 11.5px;
-  color: var(--ink-dim);
-  word-break: break-all;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
+.btn-dashboard:hover { box-shadow: 0 6px 18px rgba(22,163,74,.45); transform: translateY(-1px); }
+.btn-dashboard:active { transform: translateY(0); }
 
 /* ===== Footer ===== */
 .app-footer {
@@ -277,7 +276,7 @@ html, body {
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
-  .side-panel { position: static; }
+  .side-col { position: static; }
   .header-tools { width: 100%; }
   .field input, .field select { min-width: 0; width: 100%; }
   .field { flex: 1; }

@@ -10,9 +10,11 @@
 <body>
   <header class="app-header">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true">🇲🇽</span>
+      <span class="brand-mark" aria-hidden="true">
+
+      </span>
       <div>
-        <h1>Mapa Interactivo de México</h1>
+        <h1>Mapa de México— IMSS Bienestar</h1>
         <p class="subtitle">32 estados · haz clic en un estado para ver detalle y conectar con AppSheet</p>
       </div>
     </div>
@@ -50,8 +52,9 @@
       <div class="tooltip" id="tooltip" role="status" aria-live="polite" hidden></div>
     </section>
 
-    <!-- Panel lateral de detalle -->
-    <aside class="side-panel" id="sidePanel" aria-label="Detalle del estado">
+    <!-- Columna lateral: card de detalle + botón Dashboard debajo -->
+    <div class="side-col">
+      <aside class="side-panel" id="sidePanel" aria-label="Detalle del estado">
       <div class="panel-empty" id="panelEmpty">
         <div class="panel-empty-icon" aria-hidden="true">📍</div>
         <h2>Selecciona un estado</h2>
@@ -73,26 +76,32 @@
             <dd id="detailCapital">—</dd>
           </div>
           <div>
-            <dt>Clave ISO</dt>
-            <dd id="detailIso">—</dd>
-          </div>
-          <div>
             <dt>Región</dt>
             <dd id="detailRegion2">—</dd>
           </div>
+          <div class="metric">
+            <dt>Hospitales identificados</dt>
+            <dd id="detailHospitales">—</dd>
+          </div>
+          <div class="metric">
+            <dt>Servicios realizados</dt>
+            <dd id="detailServicios">—</dd>
+          </div>
+          <div class="metric metric-wide">
+            <dt>Agentes instalados</dt>
+            <dd id="detailAgentes">—</dd>
+          </div>
         </dl>
-
-        <!-- Acción lista para conectar con AppSheet -->
-        <div class="appsheet-box">
-          <h3>Conexión a AppSheet</h3>
-          <p class="appsheet-hint">Conectado a <strong>MONITOR Kaspersky 4N</strong> · vista <code>Mapa</code>. Abre el estado filtrado por <code>Clave</code> (clave ISO).</p>
-          <button type="button" class="btn-appsheet" id="appsheetBtn" data-state-id="">
-            <span aria-hidden="true">🔗</span> Abrir en AppSheet
-          </button>
-          <div class="appsheet-url" id="appsheetUrlPreview" aria-live="polite"></div>
-        </div>
       </div>
     </aside>
+
+    <!-- Botón debajo de la card: abre la vista Dashboard en AppSheet -->
+    <div class="dashboard-cta">
+      <button type="button" class="btn-dashboard" id="dashboardBtn">
+        <span aria-hidden="true"></span> Abrir Dashboard en AppSheet
+      </button>
+    </div>
+    </div>
   </main>
 
   <footer class="app-footer">
