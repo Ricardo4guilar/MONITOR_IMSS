@@ -37,6 +37,12 @@
     <section class="map-wrap" aria-label="Mapa de México">
       <div class="map-toolbar">
         <button type="button" class="chip" id="resetBtn" title="Restablecer vista y selección">↺ Restablecer</button>
+        <div class="zoom-controls" role="group" aria-label="Controles de zoom del mapa">
+          <button type="button" class="chip zoom-btn" id="zoomOutBtn" title="Alejar (zoom-out)" aria-label="Alejar">−</button>
+          <button type="button" class="chip zoom-btn" id="zoomRestoreBtn" title="Tamaño real (zoom-restore)" aria-label="Restablecer zoom">⤢</button>
+          <button type="button" class="chip zoom-btn" id="zoomInBtn" title="Acercar (zoom-in)" aria-label="Acercar">+</button>
+          <span class="zoom-level" id="zoomLevel" aria-live="polite">100%</span>
+        </div>
         <span class="count-badge"><strong id="visibleCount">32</strong> estados visibles</span>
       </div>
 
