@@ -213,6 +213,114 @@
   }
 
   /* =============================================================
+   *  TagMap(): ancla iconos de métricas (Lucide) a cada estado del
+   *  mapa como referencia visual de la existencia de la métrica en la
+   *  entidad. Para cada estado con métrica > 0 coloca su icono en el
+   *  centro geométrico del path:
+   *    - Hospital (hospitales identificados)
+   *    - Wrench   (servicios realizados)
+   *    - Bot      (agentes instalados)
+   *
+   *  Los iconos se insertan como <foreignObject> dentro del SVG (en un
+   *  grupo <g class="map-tags">) usando elementos <i data-lucide="…">
+   *  que luego materializa lucide.createIcons(). Al re-ejecutarse limpia
+   *  el grupo previo para evitar duplicados.
+   * ============================================================= */
+  // Orden y mapeo de las métricas a su icono Lucide.
+  const TAG_DEFS = [
+    { key: "hospitales", icon: "hospital" },
+    { key: "servicios",  icon: "wrench" },
+    { key: "agentes",    icon: "bot" },
+  ];
+  // Tamaño del icono en unidades del viewBox del SVG.
+  const TAG_SIZE = 14;
+  const TAG_GAP = 2; // separación horizontal entre iconos
+
+  function TagMap() {
+    const svg = el.stage.querySelector("svg");
+    if (!svg) return;
+
+    // Limpia tags previos (re-render al recargar métricas).
+    const old = svg.querySelector(".map-tags");
+    if (old) old.remove();
+
+    const group = document.createElementNS(SVG_NS, "g");
+    group.setAttribute("class", "map-tags");
+
+    MAP.states.forEach((s) => {
+      const path = document.getElementById("path-" + s.id);
+      if (!path) return;
+
+      const m = metricsFor(s.id);
+      // Qué iconos corresponden a este estado (métrica > 0).
+      const icons = TAG_DEFS.filter((d) => (m[d.key] || 0) > 0).map((d) => d.icon);
+      if (!icons.length) return;
+
+      // Centro geométrico del estado (caja envolvente del path).
+      let cx, cy;
+      try {
+        const bb = path.getBBox();
+        cx = bb.x + bb.width / 2;
+        cy = bb.y + bb.height / 2;
+      } catch (e) {
+        return; // getBBox puede fallar si el path no está renderizado
+      }
+
+      // Distribuye los iconos horizontalmente, centrados en (cx, cy).
+      const total = icons.length * TAG_SIZE + (icons.length - 1) * TAG_GAP;
+      let x = cx - total / 2;
+      const y = cy - TAG_SIZE / 2;
+
+      icons.forEach((icon) => {
+        const fo = document.createElementNS(SVG_NS, "foreignObject");
+        fo.setAttribute("x", x);
+        fo.setAttribute("y", y);
+        fo.setAttribute("width", TAG_SIZE);
+        fo.setAttribute("height", TAG_SIZE);
+        fo.setAttribute("class", "map-tag");
+        fo.setAttribute("data-id", s.id);
+
+        const i = document.createElement("i");
+        i.setAttribute("data-lucide", icon);
+        i.setAttribute("aria-hidden", "true");
+        fo.appendChild(i);
+        group.appendChild(fo);
+
+        x += TAG_SIZE + TAG_GAP;
+      });
+    });
+
+    svg.appendChild(group);
+
+    // Materializa los <i data-lucide> en SVG con Lucide.
+    renderLucideIcons();
+
+    // Sincroniza el atenuado de tags con el filtro de regiones actual.
+    syncTagVisibility();
+  }
+
+  // Atenúa los tags cuyos estados están ocultos por el filtro/leyenda.
+  function syncTagVisibility() {
+    const svg = el.stage.querySelector("svg");
+    if (!svg) return;
+    svg.querySelectorAll(".map-tag").forEach((tag) => {
+      const id = tag.getAttribute("data-id");
+      const path = document.getElementById("path-" + id);
+      const dimmed = path && path.classList.contains("is-dimmed");
+      tag.classList.toggle("is-dimmed", !!dimmed);
+    });
+  }
+
+  // Ejecuta lucide.createIcons() de forma segura (cards + tags del mapa).
+  function renderLucideIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    } else {
+      console.warn("Lucide no está disponible: los iconos no se renderizarán.");
+    }
+  }
+
+  /* =============================================================
    *  MapeoEntidad(): carga las métricas por entidad y las mapea por
    *  clave ISO para la card de detalle:
    *    - hospitales → conteo DirectorioHospital por EntidadRef
@@ -400,6 +508,9 @@
     });
 
     el.visibleCount.textContent = visible;
+
+    // Mantén los iconos de métricas (TagMap) atenuados junto a sus estados.
+    syncTagVisibility();
   }
 
   /* ---------- Tooltip ---------- */
@@ -547,6 +658,10 @@
     buildLegendAndFilter();
     paintStates();
     applyFilters();
+
+    // 3.1) Anclar iconos de métricas (Lucide) a los estados del mapa y
+    //      materializar también los iconos de las cards.
+    TagMap();
 
     // 4) Si AppSheet envió ?clave_iso=MX..., seleccionar esa entidad.
     selectStateFromUrl();
