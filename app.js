@@ -41,6 +41,7 @@
     dServicios: document.getElementById("detailServicios"),
     dAgentes: document.getElementById("detailAgentes"),
     dashboardBtn: document.getElementById("dashboardBtn"),
+    panelEmptyIcon: document.querySelector(".panel-empty-icon"),
   };
 
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -292,10 +293,30 @@
     });
     return g;
   }
-  // Tamaño base del icono en unidades del viewBox del SVG.
-  const TAG_SIZE = 12;
+  // Tamaño base del icono en unidades del viewBox del SVG (+15%).
+  const TAG_SIZE = 13.8;        // antes 12 (+15%)
   const TAG_GAP = 1.5;          // separación horizontal entre iconos
-  const DOT_SIZE = 5;           // lado del punto negro cuadrado (T)
+  const DOT_SIZE = 5.75;        // lado del punto negro cuadrado (T), antes 5 (+15%)
+
+  /* Coordenadas (x,y) en el viewBox del mapa de la CAPITAL geográfica de
+   * cada estado. Derivadas proyectando la lat/lng real de cada capital con
+   * una transformación afín calibrada contra el propio mapa (Simplemaps).
+   * Los iconos se anclan a estas coordenadas; si la capital cae fuera del
+   * polígono (estados pequeños y muy juntos), se hace clamp al punto
+   * interior del estado (ver capitalAnchor). */
+  const CAPITAL_XY = {
+    MXSON:{x:249.4,y:154.2}, MXBCN:{x:119.9,y:44.1}, MXCHH:{x:398.1,y:165.3},
+    MXCOA:{x:546.6,y:264.3}, MXTAM:{x:599.8,y:316.7}, MXNLE:{x:568.4,y:255.5},
+    MXROO:{x:920.3,y:476.2}, MXCAM:{x:854.9,y:435.7}, MXTAB:{x:776.2,y:495.5},
+    MXCHP:{x:768.0,y:534.9}, MXCOL:{x:447.8,y:461.9}, MXNAY:{x:417.3,y:390.8},
+    MXBCS:{x:257.1,y:310.3}, MXSIN:{x:348.6,y:287.5}, MXYUC:{x:886.7,y:399.1},
+    MXVER:{x:658.1,y:448.5}, MXJAL:{x:462.8,y:416.8}, MXMIC:{x:527.0,y:446.0},
+    MXGRO:{x:573.4,y:513.2}, MXOAX:{x:657.7,y:526.7}, MXMEX:{x:573.0,y:458.3},
+    MXPUE:{x:617.0,y:465.2}, MXMOR:{x:585.5,y:469.5}, MXQUE:{x:553.6,y:417.3},
+    MXHID:{x:602.6,y:431.9}, MXGUA:{x:528.0,y:404.2}, MXSLP:{x:539.2,y:367.9},
+    MXZAC:{x:491.5,y:349.4}, MXAGU:{x:498.3,y:377.3}, MXDUR:{x:430.9,y:310.7},
+    MXTLA:{x:616.6,y:456.5}, MXCMX:{x:589.5,y:453.3},
+  };
 
   // Cache de puntos interiores por estado (evita recomputar en cada zoom).
   const interiorCache = Object.create(null);
@@ -345,6 +366,37 @@
     return best;
   }
 
+  /* Devuelve el punto de anclaje de los iconos para un estado: la CAPITAL
+   * geográfica si está definida y cae dentro del polígono; si cae fuera
+   * (imprecisión de proyección en estados pequeños), hace clamp al punto
+   * del interior del estado más cercano a la capital sobre el segmento
+   * capital→punto-interior. Si no hay capital, usa el punto interior. */
+  function capitalAnchor(path, stateId) {
+    const ip = interiorPoint(path);
+    const cap = CAPITAL_XY[stateId];
+    if (!cap) return ip;
+    if (!ip) return cap;
+
+    const svg = path.ownerSVGElement;
+    const pt = svg.createSVGPoint();
+    const inside = (x, y) => { pt.x = x; pt.y = y; return path.isPointInFill(pt); };
+
+    // La capital cae dentro -> úsala tal cual.
+    if (inside(cap.x, cap.y)) return { x: cap.x, y: cap.y };
+
+    // Cae fuera -> busca el punto más cercano a la capital que esté dentro,
+    // interpolando entre la capital y el punto interior del estado.
+    let lo = 0, hi = 1, best = { x: ip.x, y: ip.y };
+    for (let i = 0; i < 18; i++) {
+      const t = (lo + hi) / 2;
+      const x = cap.x + (ip.x - cap.x) * t;
+      const y = cap.y + (ip.y - cap.y) * t;
+      if (inside(x, y)) { best = { x, y }; hi = t; } // dentro: acércate más a la capital
+      else { lo = t; }                                 // fuera: aléjate hacia el interior
+    }
+    return best;
+  }
+
   /* ¿Caben `count` iconos (en línea) centrados en (cx,cy) dentro del path?
    * Comprueba que las esquinas de la caja de iconos estén dentro del fill. */
   function iconsFit(path, cx, cy, count, scale) {
@@ -377,9 +429,12 @@
     const group = document.createElementNS(SVG_NS, "g");
     group.setAttribute("class", "map-tags");
 
-    // A mayor zoom, los iconos del mapa deben verse del mismo tamaño en
-    // pantalla, así que se escalan en sentido inverso al zoom.
-    const iconScale = 1 / zoomState.scale;
+    // Los iconos deben verse SIEMPRE del mismo tamaño en pantalla sin
+    // importar el zoom. El zoom se hace por viewBox (ver ZoomMap), así que
+    // el tamaño en coordenadas del mapa debe ser proporcional al ancho
+    // actual del viewBox respecto al original: menos viewBox (más zoom) ->
+    // iconos más pequeños en coords del mapa -> tamaño constante en px.
+    const iconScale = mapView.w / BASE.w;
 
     MAP.states.forEach((s) => {
       const path = document.getElementById("path-" + s.id);
@@ -389,25 +444,15 @@
       const icons = TAG_DEFS.filter((d) => (m[d.key] || 0) > 0).map((d) => d.icon);
       if (!icons.length) return;
 
-      const ip = interiorPoint(path);
-      if (!ip) return;
-      const cx = ip.x, cy = ip.y;
-
-      // Decide iconos vs. punto (T):
-      //  - Siempre se intenta mostrar los iconos del estado.
-      //  - Si NO caben dentro del polígono a la escala aparente actual se
-      //    usa el punto negro cuadrado (T).
-      //  Al hacer zoom-in los iconos aparentes miden lo mismo en pantalla
-      //  (iconScale = 1/scale), por lo que en coordenadas del mapa se
-      //  reducen y acaban cabiendo: así (T) -> iconos. Al hacer zoom-out
-      //  crecen en coordenadas del mapa y dejan de caber: iconos -> (T).
-      const fits = iconsFit(path, cx, cy, icons.length, iconScale);
-
-      if (fits) {
-        renderIconsInto(group, s.id, icons, cx, cy, iconScale);
-      } else {
-        renderDotInto(group, s.id, cx, cy, iconScale);
-      }
+      // Ancla los iconos a la capital geográfica del estado (con respaldo
+      // al interior del polígono si la capital cae fuera por la proyección).
+      const anchor = capitalAnchor(path, s.id);
+      if (!anchor) return;
+      const cx = anchor.x, cy = anchor.y;
+      // Todos los estados con métrica > 0 muestran SIEMPRE el punto negro
+      // cuadrado (T), sin importar el zoom. (Los iconos de las cards de
+      // métricas no cambian; solo cambia el marcador del mapa.)
+      renderDotInto(group, s.id, cx, cy, iconScale);
     });
 
     svg.appendChild(group);
@@ -476,46 +521,158 @@
 
   /* =============================================================
    *  ZoomMap(): control de zoom del mapa con zoom-in / zoom-out /
-   *  zoom-restore. El zoom escala el <svg> con CSS transform.
-   *   - zoom-restore: tamaño real (escala 1, estado actual del mapa).
-   *   - zoom-in : aumenta la escala. Los iconos del mapa mantienen su
-   *               tamaño en pantalla, por lo que ocupan menos área del
-   *               polígono y los puntos (T) que ya caben se reemplazan
-   *               por los iconos del estado.
-   *   - zoom-out: reduce la escala; los iconos crecen respecto al mapa y
-   *               los que dejan de caber vuelven a (T).
-   *  Tras cada cambio de zoom se re-ejecuta TagMap() para recalcular
-   *  (T) <-> iconos y el tamaño aparente de los iconos.
+   *  zoom-restore. El zoom se hace por VIEWBOX del SVG (zoom + paneo
+   *  reales, estilo mapa), no con CSS transform, para que:
+   *   - Los iconos del mapa se mantengan SIEMPRE del mismo tamaño en
+   *     pantalla (TagMap escala su tamaño en coords del mapa según el
+   *     ancho actual del viewBox), sin distorsionarse al hacer zoom-in.
+   *   - El mapa se pueda desplazar con click sostenido (ver setupPan).
+   *
+   *   - zoom-restore: viewBox original = tamaño real (100%).
+   *   - zoom-in : reduce el viewBox (acerca). Los (T) que ya caben pasan
+   *               a iconos (porque ocupan menos área del polígono).
+   *   - zoom-out: amplía el viewBox (aleja); los iconos que dejan de caber
+   *               vuelven a (T). No se puede alejar más allá del original.
+   *  Tras cada cambio se re-ejecuta TagMap() para recalcular (T) <-> iconos
+   *  y el tamaño aparente de los iconos.
    * ============================================================= */
-  const ZOOM_MIN = 1;          // zoom-restore = tamaño real (actual)
-  const ZOOM_MAX = 4;
-  const ZOOM_STEP = 0.5;
-  const zoomState = { scale: 1 };
+  const ZOOM_MIN = 1;          // zoom-restore = tamaño real (100%)
+  const ZOOM_MAX = 6;          // acercamiento máximo
+  const ZOOM_FACTOR = 1.4;     // paso de zoom por clic
 
-  function applyZoom() {
+  // viewBox original del mapa ("x y w h") -> base inmutable.
+  const BASE = (function () {
+    const p = String(MAP.viewBox).trim().split(/\s+/).map(Number);
+    return { x: p[0] || 0, y: p[1] || 0, w: p[2] || 1000, h: p[3] || 630 };
+  })();
+  // viewBox actual (mutable con zoom/pan).
+  const mapView = { x: BASE.x, y: BASE.y, w: BASE.w, h: BASE.h };
+
+  // Factor de zoom visible (1 = 100%).
+  function zoomFactor() { return BASE.w / mapView.w; }
+
+  // Aplica el viewBox actual al SVG, actualiza controles y re-renderiza tags.
+  function applyView() {
     const svg = el.stage.querySelector("svg");
-    if (svg) svg.style.transform = "scale(" + zoomState.scale + ")";
-    if (el.zoomLevel) el.zoomLevel.textContent = Math.round(zoomState.scale * 100) + "%";
-    if (el.zoomOut) el.zoomOut.disabled = zoomState.scale <= ZOOM_MIN + 1e-6;
-    if (el.zoomIn) el.zoomIn.disabled = zoomState.scale >= ZOOM_MAX - 1e-6;
-    // Recalcula iconos vs. (T) y su tamaño aparente a la nueva escala.
+    if (!svg) return;
+    svg.setAttribute("viewBox", mapView.x + " " + mapView.y + " " + mapView.w + " " + mapView.h);
+    const f = zoomFactor();
+    if (el.zoomLevel) el.zoomLevel.textContent = Math.round(f * 100) + "%";
+    if (el.zoomOut) el.zoomOut.disabled = f <= ZOOM_MIN + 1e-3;
+    if (el.zoomIn) el.zoomIn.disabled = f >= ZOOM_MAX - 1e-3;
+    // Recalcula iconos vs. (T) y su tamaño aparente (constante en pantalla).
     TagMap();
   }
 
+  // Mantiene el viewBox dentro de los límites del mapa (no salirse al panear).
+  function clampView() {
+    // Limita el tamaño por el zoom permitido.
+    const minW = BASE.w / ZOOM_MAX, maxW = BASE.w;
+    mapView.w = Math.min(maxW, Math.max(minW, mapView.w));
+    mapView.h = mapView.w * (BASE.h / BASE.w);
+    // Limita la posición para no mostrar vacío fuera del mapa.
+    mapView.x = Math.min(BASE.x + BASE.w - mapView.w, Math.max(BASE.x, mapView.x));
+    mapView.y = Math.min(BASE.y + BASE.h - mapView.h, Math.max(BASE.y, mapView.y));
+  }
+
+  // Zoom centrado en un punto del mapa (cx,cy en coords del viewBox).
+  function zoomAt(factor, cx, cy) {
+    const newW = mapView.w / factor;
+    const newH = mapView.h / factor;
+    // Mantén el punto (cx,cy) en la misma posición relativa de la vista.
+    const relX = (cx - mapView.x) / mapView.w;
+    const relY = (cy - mapView.y) / mapView.h;
+    mapView.x = cx - relX * newW;
+    mapView.y = cy - relY * newH;
+    mapView.w = newW;
+    mapView.h = newH;
+    clampView();
+    applyView();
+  }
+
   function ZoomMap(action) {
+    const cx = mapView.x + mapView.w / 2; // centro actual de la vista
+    const cy = mapView.y + mapView.h / 2;
     switch (action) {
       case "in":
-        zoomState.scale = Math.min(ZOOM_MAX, +(zoomState.scale + ZOOM_STEP).toFixed(2));
+        zoomAt(Math.min(ZOOM_FACTOR, ZOOM_MAX / zoomFactor()), cx, cy);
         break;
       case "out":
-        zoomState.scale = Math.max(ZOOM_MIN, +(zoomState.scale - ZOOM_STEP).toFixed(2));
+        zoomAt(Math.max(1 / ZOOM_FACTOR, ZOOM_MIN / zoomFactor()), cx, cy);
         break;
       case "restore":
       default:
-        zoomState.scale = ZOOM_MIN; // tamaño real
+        mapView.x = BASE.x; mapView.y = BASE.y; mapView.w = BASE.w; mapView.h = BASE.h;
+        applyView();
         break;
     }
-    applyZoom();
+  }
+
+  /* ---------- Paneo con click sostenido del ratón ----------
+   * Arrastra el mapa moviendo el viewBox en sentido contrario al cursor.
+   * Convierte el desplazamiento en píxeles a unidades del viewBox usando
+   * la escala actual (mapView.w / anchoEnPx). */
+  function setupPan() {
+    const svg = el.stage.querySelector("svg");
+    if (!svg) return;
+
+    let dragging = false, moved = false;
+    let startClientX = 0, startClientY = 0;
+    let startViewX = 0, startViewY = 0;
+
+    const unitsPerPx = () => {
+      const rect = svg.getBoundingClientRect();
+      return { ux: mapView.w / rect.width, uy: mapView.h / rect.height };
+    };
+
+    svg.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;      // solo botón izquierdo
+      dragging = true; moved = false;
+      startClientX = e.clientX; startClientY = e.clientY;
+      startViewX = mapView.x; startViewY = mapView.y;
+      svg.classList.add("is-panning");
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      const { ux, uy } = unitsPerPx();
+      const dx = (e.clientX - startClientX) * ux;
+      const dy = (e.clientY - startClientY) * uy;
+      if (Math.abs(e.clientX - startClientX) > 3 || Math.abs(e.clientY - startClientY) > 3) {
+        moved = true;
+      }
+      mapView.x = startViewX - dx;
+      mapView.y = startViewY - dy;
+      clampView();
+      // Durante el arrastre basta con mover el viewBox (sin recalcular tags
+      // cada frame es más fluido; TagMap no depende de x/y, solo del ancho).
+      svg.setAttribute("viewBox", mapView.x + " " + mapView.y + " " + mapView.w + " " + mapView.h);
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (!dragging) return;
+      dragging = false;
+      svg.classList.remove("is-panning");
+    });
+
+    // Evita que un arrastre dispare la selección del estado (click).
+    svg.addEventListener("click", (e) => {
+      if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; }
+    }, true);
+
+    // Rueda del ratón: zoom centrado en el cursor.
+    svg.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      const cx = mapView.x + ((e.clientX - rect.left) / rect.width) * mapView.w;
+      const cy = mapView.y + ((e.clientY - rect.top) / rect.height) * mapView.h;
+      const f = e.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+      const clamped = Math.min(
+        ZOOM_MAX / zoomFactor(),
+        Math.max(ZOOM_MIN / zoomFactor(), f)
+      );
+      zoomAt(clamped, cx, cy);
+    }, { passive: false });
   }
 
   /* =============================================================
@@ -846,38 +1003,65 @@
   }
 
   /* ---------- Init ---------- */
+  /* ---------- Loader inicial (efecto pulse durante la carga) ----------
+   * Activa el "latido" en el mapa y en el icono line-dot-top-vertical del
+   * panel informativo mientras se consumen los datos. Al terminar la carga
+   * (con o sin respuesta) se detienen los efectos. */
+  function startLoading() {
+    if (el.stage) el.stage.classList.add("is-loading");
+    if (el.panelEmptyIcon) el.panelEmptyIcon.classList.add("is-loading");
+  }
+  function stopLoading() {
+    if (el.stage) el.stage.classList.remove("is-loading");
+    if (el.panelEmptyIcon) el.panelEmptyIcon.classList.remove("is-loading");
+  }
+
   async function init() {
     renderMap();
 
-    // 1) Cargar la tabla EntidadesFederativas y regenerar región/color.
-    const objs = await loadEntidades();
-    applyEntidades(objs);
+    // Materializa los iconos Lucide (incluido el del panel vacío) ANTES de
+    // cargar datos, para que el efecto pulse del icono sea visible ya.
+    renderLucideIcons();
 
-    // 2) Cargar las métricas por entidad (hospitales/servicios/agentes).
-    await MapeoEntidad();
+    // Inicia el loader (pulse en mapa + icono del panel) durante la carga.
+    startLoading();
 
-    // 3) Construir leyenda/filtro con las regiones resultantes y pintar.
-    buildLegendAndFilter();
-    paintStates();
-    applyFilters();
+    try {
+      // 1) Cargar la tabla EntidadesFederativas y regenerar región/color.
+      const objs = await loadEntidades();
+      applyEntidades(objs);
 
-    // 3.1) Anclar iconos de métricas (Lucide) a los estados del mapa y
-    //      materializar también los iconos de las cards.
-    TagMap();
+      // 2) Cargar las métricas por entidad (hospitales/servicios/agentes).
+      await MapeoEntidad();
 
-    // 4) Si AppSheet envió ?clave_iso=MX..., seleccionar esa entidad.
-    selectStateFromUrl();
+      // 3) Construir leyenda/filtro con las regiones resultantes y pintar.
+      buildLegendAndFilter();
+      paintStates();
+      applyFilters();
+
+      // 3.1) Anclar los marcadores del mapa y materializar los iconos de
+      //      las cards de métricas.
+      TagMap();
+      renderLucideIcons();
+
+      // 4) Si AppSheet envió ?clave_iso=MX..., seleccionar esa entidad.
+      selectStateFromUrl();
+    } finally {
+      // Detiene el loader al tener respuesta y consumir la data (o si falla).
+      stopLoading();
+    }
 
     el.search.addEventListener("input", applyFilters);
     el.region.addEventListener("change", applyFilters);
     el.reset.addEventListener("click", resetAll);
     if (el.dashboardBtn) el.dashboardBtn.addEventListener("click", openDashboard);
 
-    // Controles de zoom del mapa (ZoomMap).
+    // Controles de zoom del mapa (ZoomMap) + paneo con click sostenido.
     if (el.zoomIn) el.zoomIn.addEventListener("click", () => ZoomMap("in"));
     if (el.zoomOut) el.zoomOut.addEventListener("click", () => ZoomMap("out"));
     if (el.zoomRestore) el.zoomRestore.addEventListener("click", () => ZoomMap("restore"));
-    applyZoom(); // estado inicial de botones/etiqueta (100%)
+    setupPan();   // desplazamiento del mapa arrastrando con el ratón
+    applyView();  // estado inicial del viewBox/botones/etiqueta (100%)
 
     // Esc limpia la selección
     document.addEventListener("keydown", (e) => {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mapa Interactivo de México · 32 Estados</title>
   <meta name="description" content="Mapa interactivo SVG de los 32 estados de México con filtro por región y acción lista para conectar con AppSheet." />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
   <header class="app-header">
@@ -37,12 +37,6 @@
     <section class="map-wrap" aria-label="Mapa de México">
       <div class="map-toolbar">
         <button type="button" class="chip" id="resetBtn" title="Restablecer vista y selección">↺ Restablecer</button>
-        <div class="zoom-controls" role="group" aria-label="Controles de zoom del mapa">
-          <button type="button" class="chip zoom-btn" id="zoomOutBtn" title="Alejar (zoom-out)" aria-label="Alejar">−</button>
-          <button type="button" class="chip zoom-btn" id="zoomRestoreBtn" title="Tamaño real (zoom-restore)" aria-label="Restablecer zoom">⤢</button>
-          <button type="button" class="chip zoom-btn" id="zoomInBtn" title="Acercar (zoom-in)" aria-label="Acercar">+</button>
-          <span class="zoom-level" id="zoomLevel" aria-live="polite">100%</span>
-        </div>
         <span class="count-badge"><strong id="visibleCount">32</strong> estados visibles</span>
       </div>
 
@@ -51,8 +45,19 @@
         <div class="map-loading" id="mapLoading">Cargando mapa…</div>
       </div>
 
-      <!-- Leyenda de regiones -->
-      <div class="legend" id="legend" aria-label="Leyenda de regiones"></div>
+      <!-- Barra inferior: leyenda de regiones + controles de zoom al mismo nivel -->
+      <div class="map-bottombar">
+        <!-- Leyenda de regiones -->
+        <div class="legend" id="legend" aria-label="Leyenda de regiones"></div>
+
+        <!-- Controles de zoom (ZoomMap) -->
+        <div class="zoom-controls" role="group" aria-label="Controles de zoom del mapa">
+          <button type="button" class="chip zoom-btn" id="zoomOutBtn" title="Alejar (zoom-out)" aria-label="Alejar">−</button>
+          <button type="button" class="chip zoom-btn" id="zoomRestoreBtn" title="Tamaño real (zoom-restore)" aria-label="Restablecer zoom">⤢</button>
+          <button type="button" class="chip zoom-btn" id="zoomInBtn" title="Acercar (zoom-in)" aria-label="Acercar">+</button>
+          <span class="zoom-level" id="zoomLevel" aria-live="polite">100%</span>
+        </div>
+      </div>
 
       <!-- Tooltip flotante -->
       <div class="tooltip" id="tooltip" role="status" aria-live="polite" hidden></div>
@@ -62,9 +67,9 @@
     <div class="side-col">
       <aside class="side-panel" id="sidePanel" aria-label="Detalle del estado">
       <div class="panel-empty" id="panelEmpty">
-        <div class="panel-empty-icon" aria-hidden="true">📍</div>
+        <div class="panel-empty-icon" aria-hidden="true"><i data-lucide="line-dot-top-vertical"></i></div>
         <h2>Selecciona un estado</h2>
-        <p>Pasa el cursor para resaltar y haz clic para ver el detalle del estado y la acción de conexión a AppSheet.</p>
+        <p>Pasa el cursor para resaltar la entidad y selecciona para consultar su información.</p>
       </div>
 
       <div class="panel-detail" id="panelDetail" hidden>
@@ -124,6 +129,6 @@
   <!-- Configuración de la conexión AppSheet -->
   <script src="appsheet-config.js"></script>
   <!-- Lógica de la app -->
-  <script src="app.js"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
