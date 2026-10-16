@@ -118,6 +118,7 @@ window.APPSHEET_CONFIG = {
         hospitales: "hospitales",
         servicios:  "servicios",
         agentes:    "agentes",
+        equipos:    "equipos",
       },
     },
   },

@@ -40,6 +40,7 @@
     dHospitales: document.getElementById("detailHospitales"),
     dServicios: document.getElementById("detailServicios"),
     dAgentes: document.getElementById("detailAgentes"),
+    dEquipos: document.getElementById("detailEquipos"),
     dashboardBtn: document.getElementById("dashboardBtn"),
     panelEmptyIcon: document.querySelector(".panel-empty-icon"),
   };
@@ -84,7 +85,7 @@
 
   // Config de métricas por entidad (card de detalle).
   const METRICS = DATA.METRICS || {};
-  const MCOLS = METRICS.COLUMNS || { iso: "clave_iso", hospitales: "hospitales", servicios: "servicios", agentes: "agentes" };
+  const MCOLS = METRICS.COLUMNS || { iso: "clave_iso", hospitales: "hospitales", servicios: "servicios", agentes: "agentes", equipos: "equipos" };
   // Métricas por clave ISO: { MXCMX: { hospitales, servicios, agentes }, ... }
   let metricsByIso = Object.create(null);
 
@@ -726,6 +727,7 @@
             hospitales: toInt(o[MCOLS.hospitales]),
             servicios: toInt(o[MCOLS.servicios]),
             agentes: toInt(o[MCOLS.agentes]),
+            equipos: toInt(o[MCOLS.equipos]),
           };
         });
         if (!Object.keys(map).length) throw new Error("sin filas con clave ISO");
@@ -747,7 +749,7 @@
 
   // Devuelve las métricas de una entidad por clave ISO (con ceros por defecto).
   function metricsFor(iso) {
-    return metricsByIso[iso] || { hospitales: 0, servicios: 0, agentes: 0 };
+    return metricsByIso[iso] || { hospitales: 0, servicios: 0, agentes: 0, equipos: 0 };
   }
 
   // Formatea números con separador de miles (es-MX).
@@ -931,11 +933,12 @@
     el.dRegion2.textContent = state.region;
     el.dCapital.textContent = state.capital;
 
-    // Métricas por entidad (card): hospitales, servicios, agentes.
+    // Métricas por entidad (card): hospitales, servicios, agentes, equipos.
     const m = metricsFor(id);
     if (el.dHospitales) el.dHospitales.textContent = fmtNum(m.hospitales);
     if (el.dServicios) el.dServicios.textContent = fmtNum(m.servicios);
     if (el.dAgentes) el.dAgentes.textContent = fmtNum(m.agentes);
+    if (el.dEquipos) el.dEquipos.textContent = fmtNum(m.equipos);
   }
 
   function clearSelection() {
