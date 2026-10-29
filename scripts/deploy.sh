@@ -12,8 +12,11 @@ SIN_PREGUNTAR=0
 fallar() { echo "ERROR: $*" >&2; exit 1; }
 
 command -v aws  >/dev/null || fallar "falta la CLI de AWS (https://aws.amazon.com/cli/)"
-command -v node >/dev/null || fallar "falta Node.js 20 o superior"
+command -v node >/dev/null || fallar "falta Node.js (20.19 o superior, o 22.12+)"
 command -v npm  >/dev/null || fallar "falta npm"
+# Vite exige Node ^20.19 o >=22.12; con otra versión el build falla a medias, así que se avisa desde el principio.
+node -e 'const [a, b] = process.versions.node.split(".").map(Number); process.exit((a === 20 && b >= 19) || (a === 22 && b >= 12) || a >= 23 ? 0 : 1)' \
+  || fallar "Node $(node -v) no sirve: se necesita 20.19 o superior (o 22.12+; no 21)"
 
 # Las hojas de datos son obligatorias: sin ellas el Directorio no tiene datos de respaldo (los CSV con
 # datos personales no se versionan).

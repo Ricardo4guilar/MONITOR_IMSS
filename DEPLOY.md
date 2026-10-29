@@ -6,7 +6,7 @@ Guía para quien despliega. Crea un sitio privado en S3 servido por CloudFront (
 ## Qué necesitas
 
 - Una cuenta de AWS y credenciales con permiso para CloudFormation, S3, CloudFront y Cognito (`aws configure` o `aws sso login`).
-- CLI de AWS v2, Node.js 20 o superior y npm.
+- CLI de AWS v2, Node.js 20.19 o superior (o 22.12+; no sirven 20.0–20.18 ni 21) y npm.
 - Las 7 URLs de las hojas de Google («Archivo → Compartir → Publicar en la web», formato CSV). Te las pasa quien administra los datos.
 
 ## Despliegue (cuatro pasos)
