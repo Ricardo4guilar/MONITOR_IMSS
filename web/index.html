@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Monitor IMSS Bienestar</title>
+    <!--
+      Aplica el tema guardado ANTES de que el navegador pinte (sin destello oscuro para quien eligió el claro).
+      Es un archivo y no un script en línea para que la CSP del despliegue pueda prohibir scripts en línea.
+    -->
+    <script src="/tema-inicial.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

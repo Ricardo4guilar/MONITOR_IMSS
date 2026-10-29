@@ -1,0 +1,311 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Monitor IMSS Bienestar: sitio estático privado en S3 servido por CloudFront (HTTPS, cabeceras de seguridad)
+  y, opcionalmente, un grupo de usuarios de Amazon Cognito con página de acceso administrada.
+
+# Uso rápido: ver DEPLOY.md. No crea roles ni usuarios de IAM, así que no necesita --capabilities.
+
+Parameters:
+  NombreApp:
+    Type: String
+    Default: imss-monitor
+    # Se usa como prefijo del dominio de acceso de Cognito, que no admite «aws», «amazon» ni «cognito».
+    AllowedPattern: '^[a-z][a-z0-9-]{1,30}$'
+    ConstraintDescription: Minúsculas, números y guiones; empieza con letra; máximo 31 caracteres.
+    Description: Nombre corto para nombrar los recursos.
+
+  PrecioCloudFront:
+    Type: String
+    Default: PriceClass_100
+    AllowedValues: [PriceClass_100, PriceClass_200, PriceClass_All]
+    Description: PriceClass_100 sirve desde Norteamérica y Europa (el más barato; suficiente para uso en México).
+
+  MfaCognito:
+    Type: String
+    Default: 'ON'
+    AllowedValues: ['ON', OPTIONAL, 'OFF']
+    # Con OPTIONAL la página de acceso NO ofrece configurar MFA por sí sola: en la práctica nadie lo activa.
+    Description: Segundo factor (app autenticadora TOTP) para entrar. ON lo exige a todos. Solo aplica si se crea el pool.
+
+  PoolExistenteId:
+    Type: String
+    Default: ''
+    Description: >-
+      Si ya existe un grupo de usuarios de Cognito, su ID (us-east-1_AbCdEf123) y NO se crea otro.
+      Déjalo vacío para que esta plantilla cree uno.
+
+  PoolExistenteClientId:
+    Type: String
+    Default: ''
+    Description: Con pool existente, el ID del cliente SIN secreto (código + PKCE, ámbitos openid y email).
+
+  PoolExistenteDominio:
+    Type: String
+    Default: ''
+    Description: Con pool existente, el dominio de la página de acceso, sin https (xxx.auth.us-east-1.amazoncognito.com).
+
+Conditions:
+  CrearCognito: !Equals [!Ref PoolExistenteId, '']
+  ExigirMfa: !Not [!Equals [!Ref MfaCognito, 'OFF']]
+
+Resources:
+  # ---------- Sitio estático ----------
+  Sitio:
+    Type: AWS::S3::Bucket
+    # Si se borra la pila el bucket se conserva: el sitio se puede reconstruir, pero no se borra nada por accidente.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: limpiar-versiones-viejas
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+
+  PoliticaDelSitio:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Sitio
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: SoloCloudFrontLee
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${Sitio.Arn}/*'
+            Condition:
+              StringEquals:
+                'AWS:SourceArn': !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${Distribucion}'
+          - Sid: SoloHttps
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt Sitio.Arn
+              - !Sub '${Sitio.Arn}/*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  ControlDeAcceso:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${NombreApp}-${AWS::StackName}'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  CabecerasDeSeguridad:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub '${NombreApp}-${AWS::StackName}-seguridad'
+        SecurityHeadersConfig:
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Preload: false
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+          ContentSecurityPolicy:
+            Override: true
+            # script-src 'self' sin 'unsafe-inline': por eso el tema inicial vive en /tema-inicial.js.
+            # style-src admite 'unsafe-inline' porque las gráficas y los menús ponen estilos en atributos.
+            # connect-src: las hojas de Google responden con un 307 a doc-NN-NN-sheets.googleusercontent.com
+            # (el número cambia), y el canje del código OAuth va al dominio de acceso de Cognito.
+            ContentSecurityPolicy: !Sub
+              - >-
+                default-src 'self';
+                script-src 'self';
+                style-src 'self' 'unsafe-inline';
+                img-src 'self' data:;
+                font-src 'self' data:;
+                connect-src 'self' https://docs.google.com https://*.googleusercontent.com https://${HostCognito};
+                object-src 'none';
+                base-uri 'self';
+                form-action 'self';
+                frame-ancestors 'none'
+              - HostCognito: !If
+                  - CrearCognito
+                  - !Sub '${NombreApp}-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com'
+                  - !Ref PoolExistenteDominio
+        CustomHeadersConfig:
+          Items:
+            - Header: Permissions-Policy
+              Value: camera=(), microphone=(), geolocation=(), payment=()
+              Override: true
+            - Header: Cross-Origin-Opener-Policy
+              Value: same-origin
+              Override: true
+
+  Distribucion:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub '${NombreApp} (${AWS::StackName})'
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: !Ref PrecioCloudFront
+        Origins:
+          - Id: sitio-s3
+            DomainName: !GetAtt Sitio.RegionalDomainName
+            OriginAccessControlId: !GetAtt ControlDeAcceso.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: sitio-s3
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          Compress: true
+          # Política administrada «CachingOptimized». Respeta el Cache-Control que sube deploy.sh:
+          # los archivos con hash, un año; index.html y lo demás, siempre revalidado.
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          ResponseHeadersPolicyId: !Ref CabecerasDeSeguridad
+        # Aplicación de una sola página: /mapa o /directorios no existen como archivos, así que S3 (privado)
+        # responde 403/404 y se entrega index.html para que el router de la app decida.
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+  # ---------- Cognito (solo si no se indicó un pool existente) ----------
+  GrupoDeUsuarios:
+    Type: AWS::Cognito::UserPool
+    Condition: CrearCognito
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: !Sub '${NombreApp}-usuarios'
+      # La página de acceso administrada (v2) exige el plan Essentials o superior.
+      UserPoolTier: ESSENTIALS
+      DeletionProtection: ACTIVE
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      UsernameConfiguration:
+        CaseSensitive: false
+      # Sin registro público: solo un administrador da de alta a las personas.
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+      MfaConfiguration: !Ref MfaCognito
+      EnabledMfas: !If [ExigirMfa, [SOFTWARE_TOKEN_MFA], !Ref 'AWS::NoValue']
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+
+  DominioDeAcceso:
+    Type: AWS::Cognito::UserPoolDomain
+    Condition: CrearCognito
+    Properties:
+      UserPoolId: !Ref GrupoDeUsuarios
+      Domain: !Sub '${NombreApp}-${AWS::AccountId}'
+      ManagedLoginVersion: 2
+
+  ClienteWeb:
+    Type: AWS::Cognito::UserPoolClient
+    Condition: CrearCognito
+    Properties:
+      UserPoolId: !Ref GrupoDeUsuarios
+      ClientName: !Sub '${NombreApp}-web'
+      # Cliente público (navegador): sin secreto, que ahí no se podría proteger. La seguridad la da PKCE.
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows: [code]
+      AllowedOAuthScopes: [openid, email]
+      SupportedIdentityProviders: [COGNITO]
+      CallbackURLs:
+        - !Sub 'https://${Distribucion.DomainName}/auth/callback'
+      LogoutURLs:
+        - !Sub 'https://${Distribucion.DomainName}/login'
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      # La app guarda solo quién es el usuario y hasta cuándo: la sesión dura lo que el ID token.
+      TokenValidityUnits:
+        IdToken: hours
+        AccessToken: hours
+        RefreshToken: days
+      IdTokenValidity: 8
+      AccessTokenValidity: 8
+      RefreshTokenValidity: 1
+
+  # Sin un estilo asociado al cliente, la página de acceso v2 no funciona.
+  EstiloDeAcceso:
+    Type: AWS::Cognito::ManagedLoginBranding
+    Condition: CrearCognito
+    DependsOn: DominioDeAcceso
+    Properties:
+      UserPoolId: !Ref GrupoDeUsuarios
+      ClientId: !Ref ClienteWeb
+      UseCognitoProvidedValues: true
+
+Outputs:
+  UrlApp:
+    Description: Dirección de la aplicación.
+    Value: !Sub 'https://${Distribucion.DomainName}'
+  Bucket:
+    Description: Bucket donde se sube el sitio (deploy.sh lo usa).
+    Value: !Ref Sitio
+  DistribucionId:
+    Description: ID de CloudFront, para invalidar la caché tras cada despliegue.
+    Value: !Ref Distribucion
+  UrlDeRetorno:
+    Description: >-
+      Con un pool existente, registrar esta URL como «Allowed callback URL» del cliente, y la de cierre
+      de sesión (UrlDeCierre) como «Allowed sign-out URL».
+    Value: !Sub 'https://${Distribucion.DomainName}/auth/callback'
+  UrlDeCierre:
+    Value: !Sub 'https://${Distribucion.DomainName}/login'
+  CognitoDominio:
+    Description: Va en VITE_COGNITO_DOMINIO.
+    Value: !If
+      - CrearCognito
+      - !Sub '${NombreApp}-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com'
+      - !Ref PoolExistenteDominio
+  CognitoClientId:
+    Description: Va en VITE_COGNITO_CLIENT_ID.
+    Value: !If [CrearCognito, !Ref ClienteWeb, !Ref PoolExistenteClientId]
+  CognitoUserPoolId:
+    Description: Va en VITE_COGNITO_USER_POOL_ID.
+    Value: !If [CrearCognito, !Ref GrupoDeUsuarios, !Ref PoolExistenteId]
