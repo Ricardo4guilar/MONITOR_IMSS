@@ -12,6 +12,7 @@ export type PuntoGrafica = PuntoAvance & {
  * `acumulado + restante` es siempre la meta, así que se deduce del primer día.
  */
 export function construirSerieAvance(puntos: readonly PuntoAvance[]): PuntoGrafica[] {
+  const totalDias = puntos.length
   const primero = puntos[0]
   const ultimo = puntos.at(-1)
   if (!primero || !ultimo) return []
@@ -25,6 +26,6 @@ export function construirSerieAvance(puntos: readonly PuntoAvance[]): PuntoGrafi
     proyeccion:
       dias === 0
         ? meta
-        : Math.round(primero.acumulado + ((meta - primero.acumulado) * (punto.dia - primero.dia)) / dias),
+        : Math.round(((punto.dia - primero.dia + 1)* meta) / totalDias)
   }))
 }

@@ -24,7 +24,7 @@ export function DashboardPage() {
     <div className="grid gap-4 lg:h-full lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)_auto]">
       {/* La gráfica de avance es la protagonista: ancho completo y todo el alto libre. */}
       <ChartPanel
-        titulo="Avance de instalación: Sep - Oct 2026"
+        titulo="Avance de instalación: Septiembre - Octubre 2026"
         icono={TrendingUp}
         leyenda={<ChartLegend series={SERIES_DE_AVANCE} />}
         ocupado={datos.cargandoAvance}
@@ -40,7 +40,7 @@ export function DashboardPage() {
       </ChartPanel>
 
       {/* Orden cronológico: primero la etapa que cerró (Sept-Oct) y después la que está en curso (Nov-Dic). */}
-      <ChartPanel titulo="Métricas de proyecto Sept-Oct" icono={CalendarCheck} ocupado={datos.cargandoSepOct}>
+      <ChartPanel titulo="Panorama del proyecto Septiembre-Octubre 2026" icono={CalendarCheck} ocupado={datos.cargandoSepOct}>
         {datos.cargandoSepOct ? (
           <Skeleton className="min-h-40 flex-1" />
         ) : datos.resumenSepOct ? (
@@ -50,7 +50,7 @@ export function DashboardPage() {
         )}
       </ChartPanel>
 
-      <ChartPanel titulo="Métricas Noviembre-Diciembre" icono={Gauge} ocupado={datos.cargandoNovDic}>
+      <ChartPanel titulo="Proyecciones para Noviembre-Diciembre 2026" icono={Gauge} ocupado={datos.cargandoNovDic}>
         {datos.cargandoNovDic ? (
           <Skeleton className="min-h-40 flex-1" />
         ) : datos.resumenNovDic ? (

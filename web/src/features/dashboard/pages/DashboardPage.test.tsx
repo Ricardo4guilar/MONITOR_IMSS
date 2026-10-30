@@ -5,8 +5,8 @@ import { simularHojas } from '@/test/fixtures'
 import { renderRuta } from '@/test/render-ruta'
 
 const TITULO_AVANCE = 'Avance de instalación: Sep - Oct 2026'
-const TITULO_NOV_DIC = 'Métricas Noviembre-Diciembre'
-const TITULO_SEP_OCT = 'Métricas de proyecto Sept-Oct'
+const TITULO_NOV_DIC = 'Proyecciones para Noviembre-Diciembre 2026'
+const TITULO_SEP_OCT = 'Panorama del proyecto Septiembre-Octubre 2026'
 
 const panel = (nombre: string) => screen.getByRole('region', { name: nombre })
 
@@ -92,23 +92,25 @@ describe('DashboardPage', () => {
       expect(within(panel(TITULO_NOV_DIC)).getByText('34,296 de 50,000 agentes')).toBeInTheDocument()
     })
 
-    it('muestra el tiempo transcurrido del periodo', async () => {
+    it('muestra el tiempo transcurrido como barra segmentada por día', async () => {
       renderRuta('/dashboard')
 
-      const barra = await within(panel(TITULO_NOV_DIC)).findByRole('progressbar', { name: 'Tiempo transcurrido' })
+      // Una barra por día entre FechaInicio (9/9/2026) y FechaLimite (31/12/2026): 114 días,
+      // con 51 transcurridos hasta FechaHoy (29/10/2026). El dibujo se anuncia en el aria-label.
+      const barra = await within(panel(TITULO_NOV_DIC)).findByRole('img', { name: /Tiempo transcurrido/ })
 
-      expect(barra).toHaveAttribute('aria-valuenow', String((50 / 113) * 100))
-      expect(within(panel(TITULO_NOV_DIC)).getByText('Día 50 de 113 · límite 31/12/2026')).toBeInTheDocument()
+      expect(barra).toHaveAccessibleName('Tiempo transcurrido: día 51 de 114 (45% transcurrido)')
     })
 
     it('compara el ritmo real contra el requerido y dice cuál va por delante', async () => {
       renderRuta('/dashboard')
 
-      await within(panel(TITULO_NOV_DIC)).findByRole('progressbar', { name: 'Ritmo de instalación' })
+      const nov = within(await screen.findByRole('region', { name: TITULO_NOV_DIC }))
 
-      expect(within(panel(TITULO_NOV_DIC)).getByText('685.9 agentes/día instalados')).toBeInTheDocument()
-      expect(within(panel(TITULO_NOV_DIC)).getByText('249.3 agentes/día requeridos')).toBeInTheDocument()
-      expect(within(panel(TITULO_NOV_DIC)).getByText('Por encima del ritmo requerido')).toBeInTheDocument()
+      // 685.92 instalados/día frente a 249.27 requeridos (se muestran como enteros).
+      expect(nov.getByText('Desde el incio de proyecto').nextElementSibling).toHaveTextContent('686')
+      expect(nov.getByText('Requerido para cumplir objetivo').nextElementSibling).toHaveTextContent('249')
+      expect(nov.getByText('Por encima del ritmo requerido')).toBeInTheDocument()
     })
 
     it('si el ritmo real no alcanza el requerido lo advierte', async () => {
@@ -156,8 +158,8 @@ describe('DashboardPage', () => {
       await within(panel(TITULO_SEP_OCT)).findByRole('progressbar', { name: 'Tiempo efectivo' })
       const cifras = within(panel(TITULO_SEP_OCT))
 
-      expect(cifras.getByText('Visitas').nextElementSibling).toHaveTextContent('47')
-      expect(cifras.getByText('Faltan').nextElementSibling).toHaveTextContent('7,970')
+      expect(cifras.getByText('Visitas realizadas a sitio').nextElementSibling).toHaveTextContent('47')
+      expect(cifras.getByText('Agentes disponibles por instalar').nextElementSibling).toHaveTextContent('7,970')
       expect(cifras.getByText('Tiempo muerto').nextElementSibling).toHaveTextContent('23.9 h')
     })
 

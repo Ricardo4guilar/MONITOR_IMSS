@@ -1,6 +1,7 @@
 import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts'
 
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
+import { ChartTodayPointer } from '@/features/dashboard/components/ChartTodayPointer'
 import type { PuntoGrafica } from '@/features/dashboard/utils/serie-avance'
 
 // Colores desde los tokens --chart-*: instalados (azul), meta (rojo) y proyección (blanco).
@@ -80,6 +81,8 @@ export function GraficaAvance({ serie }: GraficaAvanceProps) {
               fill="url(#relleno-acumulado)"
               dot={false}
             />
+            {/* Marca el día en curso; no toca las series ni el punto activo del tooltip. */}
+            <ChartTodayPointer serie={serie} />
           </ComposedChart>
         </ChartContainer>
       </div>
