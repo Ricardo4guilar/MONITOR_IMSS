@@ -19,15 +19,18 @@ const entornoSchema = z.object({
   VITE_COGNITO_DOMINIO: z.string().optional(),
   VITE_COGNITO_CLIENT_ID: z.string().optional(),
   VITE_COGNITO_USER_POOL_ID: z.string().optional(),
-  /** Credencial del adaptador de DESARROLLO. Solo se lee en `vite dev`; en producción vale `undefined`. */
+  /** Credencial del login por formulario (dev y demo de Vercel). No es secreta: viaja en el bundle. */
   VITE_DEV_USUARIO: z.string().optional(),
   VITE_DEV_CLAVE: z.string().optional(),
 })
 
 // Una por una, nunca `import.meta.env` completo: Vite sustituye cada acceso explícito por su valor, pero si
 // se usa el objeto entero lo incrusta con TODAS las variables VITE_* dentro del código que se publica.
-// Las credenciales de desarrollo van detrás de `import.meta.env.DEV`: en el build de producción esa rama
-// es código muerto y el minificador la elimina junto con el valor (se comprueba buscándolo en dist/).
+//
+// VITE_DEV_USUARIO/CLAVE se incluyen también en producción para habilitar el login por formulario en la
+// DEMO interna de Vercel (sin Cognito). ADVERTENCIA: la clave queda embebida en el JavaScript publicado y
+// es legible por cualquiera; NO es seguridad real, solo evita compartir la preview abierta con el equipo.
+// El despliegue público (AWS) usa Cognito y no depende de estas variables.
 export const env = entornoSchema.parse({
   VITE_ENTIDADES_CSV_URL: import.meta.env.VITE_ENTIDADES_CSV_URL,
   VITE_METRICAS_CSV_URL: import.meta.env.VITE_METRICAS_CSV_URL,
@@ -39,6 +42,6 @@ export const env = entornoSchema.parse({
   VITE_COGNITO_DOMINIO: import.meta.env.VITE_COGNITO_DOMINIO,
   VITE_COGNITO_CLIENT_ID: import.meta.env.VITE_COGNITO_CLIENT_ID,
   VITE_COGNITO_USER_POOL_ID: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-  VITE_DEV_USUARIO: import.meta.env.DEV ? import.meta.env.VITE_DEV_USUARIO : undefined,
-  VITE_DEV_CLAVE: import.meta.env.DEV ? import.meta.env.VITE_DEV_CLAVE : undefined,
+  VITE_DEV_USUARIO: import.meta.env.VITE_DEV_USUARIO,
+  VITE_DEV_CLAVE: import.meta.env.VITE_DEV_CLAVE,
 })

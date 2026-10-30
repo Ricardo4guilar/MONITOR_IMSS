@@ -39,7 +39,9 @@ export function crearServicioAuth(): ServicioAuth {
     })
   }
 
-  if (import.meta.env.DEV && env.VITE_DEV_USUARIO && env.VITE_DEV_CLAVE) {
+  // Login por formulario: en `vite dev` o, para la DEMO de Vercel, también en el build de producción.
+  // No es seguridad real (la clave viaja en el bundle); el despliegue público usa Cognito, arriba.
+  if (env.VITE_DEV_USUARIO && env.VITE_DEV_CLAVE) {
     return crearAuthDesarrollo({ usuario: env.VITE_DEV_USUARIO, clave: env.VITE_DEV_CLAVE, almacen: sessionStorage })
   }
   return authNoConfigurada
