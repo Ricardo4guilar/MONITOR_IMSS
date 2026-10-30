@@ -40,7 +40,7 @@ export function DashboardPage() {
       </ChartPanel>
 
       {/* Orden cronológico: primero la etapa que cerró (Sept-Oct) y después la que está en curso (Nov-Dic). */}
-      <ChartPanel titulo="Métricas de proyecto Sept-Oct" icono={CalendarCheck} ocupado={datos.cargandoSepOct}>
+      <ChartPanel titulo="Panorama del proyecto Septiembre-Octubre 2026" icono={CalendarCheck} ocupado={datos.cargandoSepOct}>
         {datos.cargandoSepOct ? (
           <Skeleton className="min-h-40 flex-1" />
         ) : datos.resumenSepOct ? (
@@ -50,7 +50,7 @@ export function DashboardPage() {
         )}
       </ChartPanel>
 
-      <ChartPanel titulo="Métricas Noviembre-Diciembre" icono={Gauge} ocupado={datos.cargandoNovDic}>
+      <ChartPanel titulo="Proyecciones para Noviembre-Diciembre 2026" icono={Gauge} ocupado={datos.cargandoNovDic}>
         {datos.cargandoNovDic ? (
           <Skeleton className="min-h-40 flex-1" />
         ) : datos.resumenNovDic ? (

@@ -59,6 +59,21 @@ const porcentajeTexto = z
   .transform((valor) => Number(valor.replace(/[%,]/g, '')))
   .refine(Number.isFinite, 'no es un porcentaje')
 
+// Tiempos en horas. La hoja los publica de dos maneras según cómo esté formateada la celda:
+// un decimal de horas ("360.0208333") o una duración "h:mm:ss" ("304:36:00", que son 304.6 h).
+// Las horas pueden pasar de 24, así que no es una hora del día sino una duración acumulada.
+const horas = z
+  .string()
+  .transform((valor) => {
+    const partes = valor.trim().split(':')
+    if (partes.length >= 2) {
+      const [h, m = '0', s = '0'] = partes
+      return Number(h) + Number(m) / 60 + Number(s) / 3600
+    }
+    return Number(valor.replace(/,/g, ''))
+  })
+  .refine(Number.isFinite, 'no es una duración válida')
+
 /**
  * Hoja «Métricas de proyecto Sept-Oct»: una métrica por fila (clave, valor).
  * Se lee ya convertida a objeto, porque cada clave es el nombre de un campo conocido.
@@ -71,9 +86,9 @@ export const resumenSepOctSchema = z
     Progreso: porcentajeTexto,
     FaltanteMeta: numero,
     Visitas: numero,
-    TiempoInvertido: numero,
-    TiempoMuerto: numero,
-    TiempoTotal: numero,
+    TiempoInvertido: horas,
+    TiempoMuerto: horas,
+    TiempoTotal: horas,
     TiempoEfectivo: porcentajeTexto,
   })
   .transform((hoja) => ({

@@ -139,4 +139,18 @@ describe('cargarResumenSepOct', () => {
 
     expect(await cargarResumenSepOct(FUENTES)).toBeNull()
   })
+
+  it('acepta los tiempos en formato duración h:mm:ss y los convierte a horas decimales', async () => {
+    const conDuraciones = SEP_OCT.replace('TiempoInvertido,360.0208333', 'TiempoInvertido,304:36:00')
+      .replace('TiempoMuerto,23.9375', 'TiempoMuerto,28:49:00')
+      .replace('TiempoTotal,383.9583333', 'TiempoTotal,333:25:00')
+    simular({ [REMOTA]: conDuraciones })
+
+    const resumen = await cargarResumenSepOct(FUENTES)
+
+    // 304:36:00 = 304 + 36/60 = 304.6 h; 28:49:00 = 28 + 49/60 ≈ 28.817 h; 333:25:00 ≈ 333.417 h.
+    expect(resumen?.tiempoInvertido).toBeCloseTo(304.6, 3)
+    expect(resumen?.tiempoMuerto).toBeCloseTo(28.8167, 3)
+    expect(resumen?.tiempoTotal).toBeCloseTo(333.4167, 3)
+  })
 })

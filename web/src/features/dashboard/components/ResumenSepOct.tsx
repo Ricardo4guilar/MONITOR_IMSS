@@ -33,8 +33,8 @@ export function ResumenSepOctPanel({ resumen }: ResumenSepOctProps) {
         detalle={`${unDecimal.format(resumen.tiempoInvertido)} h invertidas de ${unDecimal.format(resumen.tiempoTotal)} h totales`}
       />
       <dl className="grid grid-cols-3 gap-3 border-t pt-4">
-        <Cifra etiqueta="Visitas" valor={enteros.format(resumen.visitas)} />
-        <Cifra etiqueta="Faltan" valor={enteros.format(resumen.faltanteMeta)} />
+        <Cifra etiqueta="Visitas realizadas a sitio" valor={enteros.format(resumen.visitas)} />
+        <Cifra etiqueta="Agentes restantes por instalar" valor={enteros.format(resumen.faltanteMeta)} />
         <Cifra etiqueta="Tiempo muerto" valor={`${unDecimal.format(resumen.tiempoMuerto)} h`} />
       </dl>
     </div>
