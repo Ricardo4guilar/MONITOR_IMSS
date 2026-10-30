@@ -24,7 +24,7 @@ export function DashboardPage() {
     <div className="grid gap-4 lg:h-full lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)_auto]">
       {/* La gráfica de avance es la protagonista: ancho completo y todo el alto libre. */}
       <ChartPanel
-        titulo="Avance de instalación: Sep - Oct 2026"
+        titulo="Avance de instalación: Septiembre - Octubre 2026"
         icono={TrendingUp}
         leyenda={<ChartLegend series={SERIES_DE_AVANCE} />}
         ocupado={datos.cargandoAvance}
