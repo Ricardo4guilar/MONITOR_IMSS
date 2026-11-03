@@ -37,7 +37,7 @@ type AvanceSegmentadoProps = {
 /**
  * Barra temporal segmentada: una celda por día entre A y B.
  * - A→H se pinta brillante (avance); H→B queda en un tono apagado (días que aún no llegan).
- * - Cada corte X se marca con un azul que resalta y sobresale, por encima del relleno.
+ * - Cada corte X se marca con el acento de la paleta activa, que resalta por encima del relleno.
  */
 export function AvanceSegmentado({ etiqueta, inicio, fin, hoy, cortes = [] }: AvanceSegmentadoProps) {
   const segmentos = useMemo(
@@ -81,8 +81,9 @@ export function AvanceSegmentado({ etiqueta, inicio, fin, hoy, cortes = [] }: Av
               className={cn(
                 'flex-1 rounded-[2px] transition-colors',
                 s.esCorte
-                  ? // Corte X: azul cian claro que resalta sobre el relleno; sobresale a lo alto.
-                    'h-full bg-sky-400 ring-1 ring-sky-200 dark:bg-sky-300'
+                  ? // Corte X: acento de la paleta (--corte), con contraste por modo: más oscuro que el relleno
+                    // en claro, más brillante en oscuro. El ring del color de la tarjeta lo separa del avance.
+                    'h-full bg-corte ring-1 ring-card'
                   : s.estado === 'transcurrido'
                     ? // Avance A→H: azul brillante del tema.
                       'h-full bg-primary'
@@ -98,7 +99,7 @@ export function AvanceSegmentado({ etiqueta, inicio, fin, hoy, cortes = [] }: Av
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {cortes.map((corte, i) => (
             <li key={i} className="flex items-center gap-1.5">
-              <span className="inline-block size-2 rounded-[2px] bg-sky-400 ring-1 ring-sky-200 dark:bg-sky-300" />
+              <span className="inline-block size-2 rounded-[2px] bg-corte" />
               {corte.etiqueta ?? (typeof corte.fecha === 'string' ? corte.fecha : fechaLarga.format(corte.fecha))}
             </li>
           ))}
