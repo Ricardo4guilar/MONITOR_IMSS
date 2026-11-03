@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { simularHojas } from '@/test/fixtures'
 import { renderRuta } from '@/test/render-ruta'
 
-const TITULO_AVANCE = 'Avance de instalación: Sep - Oct 2026'
+const TITULO_AVANCE = 'Avance de instalación: Septiembre - Octubre 2026'
 const TITULO_NOV_DIC = 'Proyecciones para Noviembre-Diciembre 2026'
 const TITULO_SEP_OCT = 'Panorama del proyecto Septiembre-Octubre 2026'
 
@@ -105,11 +105,14 @@ describe('DashboardPage', () => {
     it('compara el ritmo real contra el requerido y dice cuál va por delante', async () => {
       renderRuta('/dashboard')
 
-      const nov = within(await screen.findByRole('region', { name: TITULO_NOV_DIC }))
+      const nov = within(panel(TITULO_NOV_DIC))
 
-      // 685.92 instalados/día frente a 249.27 requeridos (se muestran como enteros).
-      expect(nov.getByText('Desde el incio de proyecto').nextElementSibling).toHaveTextContent('686')
-      expect(nov.getByText('Requerido para cumplir objetivo').nextElementSibling).toHaveTextContent('249')
+      // Espera a que el panel deje de cargar y muestre las cifras de ritmo.
+      const etiquetaInstalado = await nov.findByText('Desde el incio de proyecto')
+
+      // 685.92 instalados/día frente a 249.27 requeridos (formato es-MX, hasta 3 decimales).
+      expect(etiquetaInstalado.nextElementSibling).toHaveTextContent('685.92')
+      expect(nov.getByText('Requerido para cumplir objetivo').nextElementSibling).toHaveTextContent('249.27')
       expect(nov.getByText('Por encima del ritmo requerido')).toBeInTheDocument()
     })
 
@@ -159,7 +162,7 @@ describe('DashboardPage', () => {
       const cifras = within(panel(TITULO_SEP_OCT))
 
       expect(cifras.getByText('Visitas realizadas a sitio').nextElementSibling).toHaveTextContent('47')
-      expect(cifras.getByText('Agentes disponibles por instalar').nextElementSibling).toHaveTextContent('7,970')
+      expect(cifras.getByText('Agentes restantes por instalar').nextElementSibling).toHaveTextContent('7,970')
       expect(cifras.getByText('Tiempo muerto').nextElementSibling).toHaveTextContent('23.9 h')
     })
 

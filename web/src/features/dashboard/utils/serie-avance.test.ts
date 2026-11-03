@@ -18,17 +18,18 @@ describe('construirSerieAvance', () => {
     expect(serie.map((p) => p.meta)).toEqual([25000, 25000])
   })
 
-  it('la proyección parte de lo instalado el primer día y llega a la meta el último', () => {
+  it('la proyección reparte la meta a ritmo constante: (día+1) × meta / número de días', () => {
+    // Regla de AppSheet generalizada: 3 puntos, meta 1000. Día 0 = 1/3, último día = 100%.
     const serie = construirSerieAvance([punto(0, 100, 900), punto(5, 400, 600), punto(10, 700, 300)])
 
-    expect(serie[0]?.proyeccion).toBe(100)
-    expect(serie[2]?.proyeccion).toBe(1000)
+    expect(serie[0]?.proyeccion).toBe(333) // (0+1)·1000/3
+    expect(serie[2]?.proyeccion).toBe(3667) // (10+1)·1000/3
   })
 
-  it('la proyección avanza en línea recta entre esos dos extremos', () => {
+  it('la proyección crece en pasos iguales según el índice del día', () => {
     const serie = construirSerieAvance([punto(0, 100, 900), punto(5, 400, 600), punto(10, 700, 300)])
 
-    expect(serie[1]?.proyeccion).toBe(550)
+    expect(serie[1]?.proyeccion).toBe(2000) // (5+1)·1000/3
   })
 
   it('conserva los datos originales de cada día', () => {

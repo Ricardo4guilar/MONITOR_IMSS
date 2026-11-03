@@ -22,6 +22,8 @@
     --color-chart-3: var(--chart-3);
     --color-chart-2: var(--chart-2);
     --color-chart-1: var(--chart-1);
+    /* Acento de "corte" en la barra segmentada: resalta sobre el relleno de avance, por paleta. */
+    --color-corte: var(--corte);
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
@@ -100,6 +102,9 @@
     --chart-4: oklch(0.56 0.17 155);
     --chart-5: oklch(0.62 0.15 80);
 
+    /* Corte (modo claro): más OSCURO y saturado que el primary (L 0.52), para destacar sobre el relleno. */
+    --corte: oklch(0.38 0.17 250);
+
     --radius: 0.75rem;
 
     --sidebar: oklch(0.96 0.008 250);
@@ -155,6 +160,9 @@
     --chart-4: oklch(0.72 0.17 155);
     --chart-5: oklch(0.8 0.15 85);
 
+    /* Corte (modo oscuro): más BRILLANTE que el primary (L 0.70), un cian claro que sobresale del relleno. */
+    --corte: oklch(0.88 0.14 215);
+
     --sidebar: oklch(0.14 0.04 258);
     --sidebar-foreground: oklch(0.8 0.025 250);
     --sidebar-primary: oklch(0.7 0.15 240);
@@ -163,6 +171,89 @@
     --sidebar-accent-foreground: oklch(0.97 0.01 250);
     --sidebar-border: oklch(0.28 0.055 256);
     --sidebar-ring: oklch(0.7 0.15 240);
+}
+
+/*
+ * Paleta NW (azul), declarada explícitamente. Aunque es la base de `:root`/`.dark`, se repite bajo
+ * `[data-paleta='nw']` para dos usos: (1) que la vista previa de cada paleta en Ajustes (un span con
+ * `data-paleta="nw"`) muestre siempre el azul aunque el documento esté en OG; (2) devolver los tokens
+ * a azul al volver de OG a NW sin depender de herencia. Mismos valores que `:root` / `.dark`.
+ */
+[data-paleta='nw'] {
+    --primary: oklch(0.52 0.16 245);
+    --primary-foreground: oklch(0.99 0 0);
+    --accent: oklch(0.92 0.03 245);
+    --accent-foreground: oklch(0.22 0.05 258);
+    --ring: oklch(0.52 0.16 245);
+
+    --chart-1: oklch(0.55 0.17 245);
+    --corte: oklch(0.38 0.17 250);
+
+    --sidebar-primary: oklch(0.52 0.16 245);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(0.91 0.035 245);
+    --sidebar-accent-foreground: oklch(0.2 0.05 258);
+    --sidebar-ring: oklch(0.52 0.16 245);
+}
+
+[data-paleta='nw'].dark {
+    --primary: oklch(0.7 0.15 240);
+    --primary-foreground: oklch(0.15 0.045 258);
+    --accent: oklch(0.29 0.07 250);
+    --accent-foreground: oklch(0.97 0.01 250);
+    --ring: oklch(0.7 0.15 240);
+
+    --chart-1: oklch(0.7 0.15 240);
+    --corte: oklch(0.88 0.14 215);
+
+    --sidebar-primary: oklch(0.7 0.15 240);
+    --sidebar-primary-foreground: oklch(0.15 0.045 258);
+    --sidebar-accent: oklch(0.29 0.08 250);
+    --sidebar-accent-foreground: oklch(0.97 0.01 250);
+    --sidebar-ring: oklch(0.7 0.15 240);
+}
+
+/*
+ * Paleta OG: verde institucional del IMSS (hue oklch ~160, verde pino). Es una capa sobre el tema: solo
+ * reescribe los tokens de MARCA (primary, accent, ring, sidebar, acento de gráficas), reusando los valores
+ * de L y C ya calibrados para no perder contraste; cambia el matiz de 245 (azul NW) a 160 (verde OG).
+ * Los fondos, texto, bordes y los colores de región se dejan intactos, así el modo claro/oscuro no cambia.
+ * `data-paleta="og"` lo pone el ThemeProvider; sin atributo queda la paleta azul de origen (NW).
+ */
+[data-paleta='og'] {
+    --primary: oklch(0.52 0.12 160);
+    --primary-foreground: oklch(0.99 0 0);
+    --accent: oklch(0.92 0.04 160);
+    --accent-foreground: oklch(0.22 0.05 165);
+    --ring: oklch(0.52 0.12 160);
+
+    --chart-1: oklch(0.55 0.13 160);
+    /* Corte en OG (modo claro): verde más OSCURO que el primary (L 0.52), para destacar sobre el relleno. */
+    --corte: oklch(0.38 0.13 160);
+
+    --sidebar-primary: oklch(0.52 0.12 160);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(0.91 0.05 160);
+    --sidebar-accent-foreground: oklch(0.2 0.05 165);
+    --sidebar-ring: oklch(0.52 0.12 160);
+}
+
+[data-paleta='og'].dark {
+    --primary: oklch(0.72 0.13 162);
+    --primary-foreground: oklch(0.15 0.04 165);
+    --accent: oklch(0.29 0.07 165);
+    --accent-foreground: oklch(0.97 0.01 150);
+    --ring: oklch(0.72 0.13 162);
+
+    --chart-1: oklch(0.72 0.13 162);
+    /* Corte en OG (modo oscuro): verde más BRILLANTE que el primary (L 0.72), sobresale del relleno. */
+    --corte: oklch(0.9 0.17 155);
+
+    --sidebar-primary: oklch(0.72 0.13 162);
+    --sidebar-primary-foreground: oklch(0.15 0.04 165);
+    --sidebar-accent: oklch(0.29 0.08 165);
+    --sidebar-accent-foreground: oklch(0.97 0.01 150);
+    --sidebar-ring: oklch(0.72 0.13 162);
 }
 
 @layer base {

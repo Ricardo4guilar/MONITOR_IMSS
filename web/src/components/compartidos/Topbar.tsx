@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 
+import { BotonRefrescar } from '@/components/compartidos/BotonRefrescar'
 import { MenuUsuario } from '@/features/auth/MenuUsuario'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -65,7 +66,10 @@ export function Topbar({
         <p className="truncate text-xs text-muted-foreground md:text-sm">{subtitulo}</p>
       </div>
 
-      <MenuUsuario className="order-1 md:order-2" />
+      <div className="order-1 flex items-center gap-1 md:order-2">
+        <BotonRefrescar />
+        <MenuUsuario />
+      </div>
 
       {hayHerramientas ? (
         <div className="order-2 flex w-full items-center gap-3 md:order-1 md:w-auto">
